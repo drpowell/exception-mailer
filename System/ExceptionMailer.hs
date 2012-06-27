@@ -2,9 +2,13 @@
 
 -- | Module to catch uncaught exceptions and send a notification email
 module System.ExceptionMailer
-    ( setupExceptionMailer, setupExceptionMailer'
+    ( exceptionMailerTag
+    , setupExceptionMailer, setupExceptionMailer'
     , mkAddress
     , mailError
+
+    -- * Re-exported for convenience
+    , Address
     ) where
 
 import Prelude hiding (catch)
@@ -17,6 +21,10 @@ import GHC.Conc (setUncaughtExceptionHandler)
 import Network.Mail.Mime
 import System.Log.Logger (errorM)
 
+-- | String tag used for logging to "System.Log.Logger"
+exceptionMailerTag :: String
+exceptionMailerTag = "ExceptionMailer"
+
 -- | Setup the global exception notifier.  This will catch any otherwise uncaught exceptions and send an email to the
 -- given address.
 --
@@ -25,14 +33,14 @@ import System.Log.Logger (errorM)
 -- > setupExceptionMailer (mkAddress "My Program" "noreply@example.com")
 -- >                        (mkAddress "Sysadmin" "sysadmin@example.com")
 setupExceptionMailer :: Address -- ^ Make the email appear to be from this address
-                       -> Address -- ^ Send the email to here
-                       -> IO ()
+                     -> Address -- ^ Send the email to here
+                     -> IO ()
 setupExceptionMailer from to = setUncaughtExceptionHandler $ emailException from to
 
 -- | Convenience version of 'setupExceptionMailer' that just accepts the email addresses
 setupExceptionMailer' :: String -- ^ Make the email appear to be from this address
-                        -> String -- ^ Send the email to here
-                        -> IO ()
+                      -> String -- ^ Send the email to here
+                      -> IO ()
 setupExceptionMailer' from to = setupExceptionMailer (Address Nothing $ fromString from) (Address Nothing $ fromString to)
 
 -- | Helper function to convert a name and email address into a proper 'Address'
@@ -50,10 +58,10 @@ mailError from to msg = do
 
 emailException :: Show a => Address -> Address -> a -> IO ()
 emailException from to e = do
-  errorM "ExceptionMailer" $ "Uncaught exception.  emailing ("++
+  errorM exceptionMailerTag $ "Uncaught exception.  emailing ("++
             show (addressEmail to)++")  : "++show e
   catch (mailError from to (show e))
-        (\e2 -> errorM "ExceptionMailer" $ "Unable to send email : "++show (e2 :: SomeException))
+        (\e2 -> errorM exceptionMailerTag $ "Unable to send email : "++show (e2 :: SomeException))
   return ()
 
 -- simpleMail' :: Monad m => Address -> Address -> Data.Text.Internal.Text -> LT.Text -> m Mail
