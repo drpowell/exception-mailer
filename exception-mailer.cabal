@@ -10,7 +10,7 @@ license-file:        LICENSE
 author:              David Powell
 maintainer:          David Powell <david@drp.id.au>
 homepage:            https://github.com/drpowell/exception-mailer
-bug-reports:         https://github.com/drpowell/exception-mailer
+bug-reports:         https://github.com/drpowell/exception-mailer/issues
 
 
 cabal-version:       >= 1.6
