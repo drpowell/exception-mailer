@@ -14,6 +14,7 @@ module System.ExceptionMailer
 import Prelude hiding (catch)
 import System.Environment (getProgName)
 import Data.String (fromString)
+import Data.Maybe
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Encoding as LT
 import Control.Exception (SomeException, catch)
@@ -34,33 +35,37 @@ exceptionMailerTag = "ExceptionMailer"
 -- >                        (mkAddress "Sysadmin" "sysadmin@example.com")
 setupExceptionMailer :: Address -- ^ Make the email appear to be from this address
                      -> Address -- ^ Send the email to here
+                     -> Maybe String -- ^ Subject
+                     -> String -- ^ Prefix to put in the email head
                      -> IO ()
-setupExceptionMailer from to = setUncaughtExceptionHandler $ emailException from to
+setupExceptionMailer from to subj pre = setUncaughtExceptionHandler $ emailException from to subj pre
 
 -- | Convenience version of 'setupExceptionMailer' that just accepts the email addresses
 setupExceptionMailer' :: String -- ^ Make the email appear to be from this address
                       -> String -- ^ Send the email to here
+                      -> Maybe String -- ^ Subject
+                      -> String -- ^ Prefix to put in the email head
                       -> IO ()
-setupExceptionMailer' from to = setupExceptionMailer (Address Nothing $ fromString from) (Address Nothing $ fromString to)
+setupExceptionMailer' from to subj pre = setupExceptionMailer (Address Nothing $ fromString from) (Address Nothing $ fromString to) subj pre
 
 -- | Helper function to convert a name and email address into a proper 'Address'
 mkAddress :: String -> String -> Address
 mkAddress name email = Address (Just $ fromString name) $ fromString email
 
 -- | Send an error email.  Exported so that it may be re-used from your own exception handling routines
-mailError :: Address -> Address -> String -> IO ()
-mailError from to msg = do
+mailError :: Address -> Address -> Maybe String -> String -> IO ()
+mailError from to subj msg = do
   prog <- getProgName
-  m <- simpleMail' from to "Exception Mailer"
+  m <- simpleMail' from to (fromString $ fromMaybe "Exception Mailer" subj)
                  (LT.concat ["Program: ", fromString $ prog ++ "\n"
                             ,"Exception:\n", fromString msg])
   renderSendMail m
 
-emailException :: Show a => Address -> Address -> a -> IO ()
-emailException from to e = do
+emailException :: Show a => Address -> Address -> Maybe String -> String -> a -> IO ()
+emailException from to subj pre e = do
   errorM exceptionMailerTag $ "Uncaught exception.  emailing ("++
             show (addressEmail to)++")  : "++show e
-  catch (mailError from to (show e))
+  catch (mailError from to subj (pre ++ show e))
         (\e2 -> errorM exceptionMailerTag $ "Unable to send email : "++show (e2 :: SomeException))
   return ()
 
