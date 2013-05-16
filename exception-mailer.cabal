@@ -1,5 +1,5 @@
 name:                exception-mailer
-version:             0.2
+version:             0.3
 synopsis:            Catch all runtime exceptions and send an email
 description:         This module is designed to be used in production code when
                      no runtime exceptions are expected.  This module will catch any

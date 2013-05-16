@@ -3,7 +3,7 @@
 -- | Module to catch uncaught exceptions and send a notification email
 module System.ExceptionMailer
     ( exceptionMailerTag
-    , setupExceptionMailer, setupExceptionMailer'
+    , setupExceptionMailer, setupExceptionMailer', setupExceptionMailer_adv
     , mkAddress
     , mailError
 
@@ -38,7 +38,8 @@ setupExceptionMailer :: Address -- ^ Make the email appear to be from this addre
                      -> Maybe String -- ^ Subject
                      -> String -- ^ Prefix to put in the email head
                      -> IO ()
-setupExceptionMailer from to subj pre = setUncaughtExceptionHandler $ emailException from to subj pre
+setupExceptionMailer from to subj pre =
+    setupExceptionMailer_adv from to subj pre (\_ -> return ())
 
 -- | Convenience version of 'setupExceptionMailer' that just accepts the email addresses
 setupExceptionMailer' :: String -- ^ Make the email appear to be from this address
@@ -47,6 +48,19 @@ setupExceptionMailer' :: String -- ^ Make the email appear to be from this addre
                       -> String -- ^ Prefix to put in the email head
                       -> IO ()
 setupExceptionMailer' from to subj pre = setupExceptionMailer (Address Nothing $ fromString from) (Address Nothing $ fromString to) subj pre
+
+-- | Setup the global exception notifier.  Like 'setupExceptionMailer' but allows a
+-- custom action after the email is send
+setupExceptionMailer_adv :: Address -- ^ Make the email appear to be from this address
+                         -> Address -- ^ Send the email to here
+                         -> Maybe String -- ^ Subject
+                         -> String -- ^ Prefix to put in the email head
+                         -> (SomeException -> IO ())
+                         -> IO ()
+setupExceptionMailer_adv from to subj pre action =
+    setUncaughtExceptionHandler $ \e -> do
+      emailException from to subj pre e
+      action e
 
 -- | Helper function to convert a name and email address into a proper 'Address'
 mkAddress :: String -> String -> Address
