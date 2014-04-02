@@ -19,7 +19,7 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Encoding as LT
 import Control.Exception (SomeException, catch)
 import GHC.Conc (setUncaughtExceptionHandler)
-import Network.Mail.Mime
+import Network.Mail.Mime hiding (simpleMail')
 import System.Log.Logger (errorM)
 
 -- | String tag used for logging to "System.Log.Logger"
