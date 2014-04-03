@@ -16,10 +16,9 @@ import System.Environment (getProgName)
 import Data.String (fromString)
 import Data.Maybe
 import qualified Data.Text.Lazy as LT
-import qualified Data.Text.Lazy.Encoding as LT
 import Control.Exception (SomeException, catch)
 import GHC.Conc (setUncaughtExceptionHandler)
-import Network.Mail.Mime hiding (simpleMail')
+import Network.Mail.Mime
 import System.Log.Logger (errorM)
 
 -- | String tag used for logging to "System.Log.Logger"
@@ -70,7 +69,7 @@ mkAddress name email = Address (Just $ fromString name) $ fromString email
 mailError :: Address -> Address -> Maybe String -> String -> IO ()
 mailError from to subj msg = do
   prog <- getProgName
-  m <- simpleMail' from to (fromString $ fromMaybe "Exception Mailer" subj)
+  let m = simpleMail' from to (fromString $ fromMaybe "Exception Mailer" subj)
                  (LT.concat ["Program: ", fromString $ prog ++ "\n"
                             ,"Exception:\n", fromString msg])
   renderSendMail m
@@ -83,16 +82,3 @@ emailException from to subj pre e = do
         (\e2 -> errorM exceptionMailerTag $ "Unable to send email : "++show (e2 :: SomeException))
   return ()
 
--- simpleMail' :: Monad m => Address -> Address -> Data.Text.Internal.Text -> LT.Text -> m Mail
-simpleMail' from to subject plainBody =
-    return Mail {
-          mailFrom = from
-        , mailTo   = [to]
-        , mailCc   = []
-        , mailBcc  = []
-        , mailHeaders = [ ("Subject",  subject) ]
-        , mailParts =
-            [[ Part "text/plain; charset=utf-8" QuotedPrintableText Nothing []
-            $ LT.encodeUtf8 plainBody
-            ]]
-        }
