@@ -1,5 +1,5 @@
 name:                exception-mailer
-version:             0.4
+version:             0.4.1
 synopsis:            Catch all runtime exceptions and send an email
 description:         This module is designed to be used in production code when
                      no runtime exceptions are expected.  This module will catch any
@@ -21,7 +21,7 @@ Library
   exposed-modules:     System.ExceptionMailer
   ghc-options:         -W
   build-depends:       base >=4 && < 5,
-                       text,
+                       text >= 0.11.3.0,
                        mime-mail >= 0.4.4,
                        hslogger
 

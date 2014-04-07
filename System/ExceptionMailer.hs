@@ -69,7 +69,7 @@ mkAddress name email = Address (Just $ fromString name) $ fromString email
 mailError :: Address -> Address -> Maybe String -> String -> IO ()
 mailError from to subj msg = do
   prog <- getProgName
-  let m = simpleMail' from to (fromString $ fromMaybe "Exception Mailer" subj)
+  let m = simpleMail' to from (fromString $ fromMaybe "Exception Mailer" subj)
                  (LT.concat ["Program: ", fromString $ prog ++ "\n"
                             ,"Exception:\n", fromString msg])
   renderSendMail m
